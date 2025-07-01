@@ -85,9 +85,20 @@ export class MemStorage implements IStorage {
   async createBotConfig(config: InsertBotConfig): Promise<BotConfig> {
     const id = this.currentBotConfigId++;
     const botConfig: BotConfig = { 
-      ...config, 
+      ...config,
       id, 
-      createdAt: new Date() 
+      createdAt: new Date(),
+      // Ensure all required fields have defaults
+      serverPort: config.serverPort ?? 25565,
+      accountType: config.accountType ?? "offline",
+      movementPattern: config.movementPattern ?? "circular",
+      movementInterval: config.movementInterval ?? 30,
+      autoReconnect: config.autoReconnect ?? true,
+      chatResponse: config.chatResponse ?? false,
+      autoStart: config.autoStart ?? false,
+      isActive: config.isActive ?? false,
+      persistentMode: config.persistentMode ?? true,
+      allowAutoDisconnect: config.allowAutoDisconnect ?? false,
     };
     this.botConfigs.set(id, botConfig);
     return botConfig;
@@ -119,16 +130,19 @@ export class MemStorage implements IStorage {
   async createBotLog(log: InsertBotLog): Promise<BotLog> {
     const id = this.currentBotLogId++;
     const botLog: BotLog = { 
-      ...log, 
-      id, 
+      id,
+      botConfigId: log.botConfigId ?? null,
+      logType: log.logType,
+      message: log.message,
       timestamp: new Date() 
     };
     
-    if (!this.botLogs.has(log.botConfigId!)) {
-      this.botLogs.set(log.botConfigId!, []);
+    const configId = log.botConfigId ?? 0;
+    if (!this.botLogs.has(configId)) {
+      this.botLogs.set(configId, []);
     }
     
-    const logs = this.botLogs.get(log.botConfigId!)!;
+    const logs = this.botLogs.get(configId)!;
     logs.push(botLog);
     
     // Keep only last 100 logs per bot
@@ -149,24 +163,35 @@ export class MemStorage implements IStorage {
   }
 
   async createOrUpdateBotStats(stats: InsertBotStats): Promise<BotStats> {
-    const existing = this.botStats.get(stats.botConfigId!);
+    const configId = stats.botConfigId ?? 0;
+    const existing = this.botStats.get(configId);
     
     if (existing) {
       const updated: BotStats = { 
-        ...existing, 
-        ...stats, 
+        id: existing.id,
+        botConfigId: configId,
+        status: stats.status ?? existing.status,
+        uptime: stats.uptime ?? existing.uptime,
+        serverPing: stats.serverPing ?? existing.serverPing,
+        reconnections: stats.reconnections ?? existing.reconnections,
+        lastPing: stats.lastPing ?? existing.lastPing,
         updatedAt: new Date() 
       };
-      this.botStats.set(stats.botConfigId!, updated);
+      this.botStats.set(configId, updated);
       return updated;
     } else {
       const id = this.currentBotStatsId++;
       const newStats: BotStats = { 
-        ...stats, 
-        id, 
+        id,
+        botConfigId: configId,
+        status: stats.status ?? "offline",
+        uptime: stats.uptime ?? 0,
+        serverPing: stats.serverPing ?? null,
+        reconnections: stats.reconnections ?? 0,
+        lastPing: stats.lastPing ?? null,
         updatedAt: new Date() 
       };
-      this.botStats.set(stats.botConfigId!, newStats);
+      this.botStats.set(configId, newStats);
       return newStats;
     }
   }

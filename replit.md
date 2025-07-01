@@ -32,8 +32,10 @@ This is a full-stack Minecraft AFK bot management application built with modern 
 ### Bot Management System
 - **Bot Configurations**: Persistent storage of bot settings including server details, movement patterns, and behavior options
 - **Real-time Control**: Start, stop, and restart bots with live status updates
+- **Persistent Mode**: "Never leave without permission" feature that prevents accidental disconnections
 - **Activity Logging**: Comprehensive logging system with different log types (INFO, MOVE, CHAT, PING, ERROR, WARN)
 - **Statistics Tracking**: Bot uptime, server ping, reconnection counts, and health metrics
+- **Force Stop Protection**: Confirmation dialogs and safety mechanisms for stopping persistent bots
 
 ### Authentication & Authorization
 - **User System**: Basic user management with username/password authentication
@@ -103,6 +105,7 @@ This is a full-stack Minecraft AFK bot management application built with modern 
 ## Changelog
 ```
 - July 01, 2025. Initial setup
+- July 01, 2025. Added "Never Leave Without Permission" feature with persistent mode
 ```
 
 ## User Preferences

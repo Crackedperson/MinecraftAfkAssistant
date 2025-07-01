@@ -1,10 +1,12 @@
 import { BotConfig } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Square, RotateCcw, UserCheck, Route } from "lucide-react";
+import { Square, RotateCcw, UserCheck, Route, Shield } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { PersistentStopDialog } from "@/components/persistent-stop-dialog";
+import { useState } from "react";
 
 interface BotControlsProps {
   botConfig: BotConfig;
@@ -13,17 +15,26 @@ interface BotControlsProps {
 
 export function BotControls({ botConfig, botStatus }: BotControlsProps) {
   const { toast } = useToast();
+  const [showPersistentDialog, setShowPersistentDialog] = useState(false);
 
   const stopBotMutation = useMutation({
-    mutationFn: () => apiRequest('POST', `/api/bot-configs/${botConfig.id}/stop`),
+    mutationFn: (forced: boolean = false) => 
+      apiRequest('POST', `/api/bot-configs/${botConfig.id}/stop`, { forced }),
     onSuccess: () => {
       toast({
         title: "Bot Stopped",
         description: "The bot has been stopped successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/bot-status'] });
+      setShowPersistentDialog(false);
     },
     onError: (error: any) => {
+      // Check if this is a persistent mode error
+      if (error.persistentMode) {
+        setShowPersistentDialog(true);
+        return;
+      }
+      
       toast({
         title: "Error",
         description: error.message || "Failed to stop bot",
@@ -117,12 +128,24 @@ export function BotControls({ botConfig, botStatus }: BotControlsProps) {
             <Route className="text-blue-600" />
           </div>
 
+          {botConfig.persistentMode && (
+            <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg border border-green-200">
+              <div className="flex items-center space-x-2">
+                <Shield className="w-5 h-5 text-green-600" />
+                <div>
+                  <h4 className="font-medium text-green-900">Persistent Mode Active</h4>
+                  <p className="text-sm text-green-700">Bot will never leave without permission</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="border-t border-gray-200 pt-4 space-y-3">
             {isOnline ? (
               <>
                 <Button 
                   className="w-full bg-red-500 text-white hover:bg-red-600"
-                  onClick={() => stopBotMutation.mutate()}
+                  onClick={() => stopBotMutation.mutate(false)}
                   disabled={stopBotMutation.isPending}
                 >
                   <Square className="w-4 h-4 mr-2" />
@@ -151,6 +174,13 @@ export function BotControls({ botConfig, botStatus }: BotControlsProps) {
           </div>
         </div>
       </div>
+
+      <PersistentStopDialog
+        isOpen={showPersistentDialog}
+        onClose={() => setShowPersistentDialog(false)}
+        onConfirm={() => stopBotMutation.mutate(true)}
+        botName={botConfig.name}
+      />
     </div>
   );
 }

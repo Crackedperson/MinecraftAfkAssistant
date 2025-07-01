@@ -161,10 +161,12 @@ export class MinecraftBotService {
         await this.addLog(configId, 'ERROR', `Kicked from server: ${reason}`);
         await this.updateStats(configId, { status: 'error' });
         
-        if (config.autoReconnect) {
+        // In persistent mode, always try to reconnect regardless of kick reason
+        if (config.persistentMode || config.autoReconnect) {
+          await this.addLog(configId, 'INFO', 'Persistent mode enabled - attempting to reconnect after kick...');
           setTimeout(() => {
             this.startBot(configId);
-          }, 5000);
+          }, 10000); // Wait 10 seconds before reconnecting after kick
         }
       });
 
@@ -180,10 +182,12 @@ export class MinecraftBotService {
           }
         });
 
-        if (config.autoReconnect) {
+        // In persistent mode, always try to reconnect after errors
+        if (config.persistentMode || config.autoReconnect) {
+          await this.addLog(configId, 'INFO', 'Persistent mode enabled - reconnecting after error...');
           setTimeout(() => {
             this.startBot(configId);
-          }, 5000);
+          }, 8000); // Wait 8 seconds before reconnecting after error
         }
       });
 
@@ -193,18 +197,25 @@ export class MinecraftBotService {
         
         this.cleanup(configId);
         
-        if (config.autoReconnect) {
+        // In persistent mode, never give up reconnecting unless explicitly stopped
+        if (config.persistentMode || config.autoReconnect) {
           const stats = await storage.getBotStats(configId);
           const reconnections = (stats?.reconnections || 0) + 1;
           
+          await this.addLog(configId, 'INFO', `Persistent mode: Reconnection attempt #${reconnections}`);
           await this.updateStats(configId, { 
             status: 'connecting',
             reconnections 
           });
           
+          // Progressive backoff but never give up in persistent mode
+          const delay = config.persistentMode ? 
+            Math.min(5000 + (reconnections * 2000), 30000) : // Max 30 seconds delay
+            5000;
+            
           setTimeout(() => {
             this.startBot(configId);
-          }, 5000);
+          }, delay);
         }
       });
 
@@ -216,17 +227,25 @@ export class MinecraftBotService {
     }
   }
 
-  async stopBot(configId: number): Promise<boolean> {
+  async stopBot(configId: number, forced: boolean = false): Promise<boolean> {
+    const config = await storage.getBotConfig(configId);
     const bot = this.bots.get(configId);
     if (!bot) return false;
 
+    // Check if bot is in persistent mode and this isn't a forced stop
+    if (config?.persistentMode && !forced) {
+      await this.addLog(configId, 'WARN', 'Stop request blocked - Bot is in persistent mode. Use force stop to override.');
+      return false;
+    }
+
     try {
-      bot.quit('Stopping AFK bot');
+      const stopReason = forced ? 'Force stopping AFK bot (Persistent mode overridden)' : 'Stopping AFK bot';
+      bot.quit(stopReason);
       this.cleanup(configId);
       
       await storage.updateBotConfig(configId, { isActive: false });
       await this.updateStats(configId, { status: 'offline' });
-      await this.addLog(configId, 'INFO', 'Bot stopped');
+      await this.addLog(configId, 'INFO', stopReason);
       
       return true;
     } catch (error) {
@@ -294,7 +313,7 @@ export class MinecraftBotService {
   }
 
   private async randomMovement(bot: Bot) {
-    const directions = ['forward', 'back', 'left', 'right'];
+    const directions: ('forward' | 'back' | 'left' | 'right')[] = ['forward', 'back', 'left', 'right'];
     const direction = directions[Math.floor(Math.random() * directions.length)];
     const duration = 200 + Math.random() * 800; // 200-1000ms
     

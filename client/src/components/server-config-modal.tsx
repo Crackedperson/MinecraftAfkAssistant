@@ -34,6 +34,8 @@ export function ServerConfigModal({ isOpen, onClose }: ServerConfigModalProps) {
       chatResponse: false,
       autoStart: false,
       isActive: false,
+      persistentMode: true,
+      allowAutoDisconnect: false,
     },
   });
 
@@ -131,6 +133,17 @@ export function ServerConfigModal({ isOpen, onClose }: ServerConfigModalProps) {
                 <SelectItem value="microsoft">Microsoft Account</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-medium text-gray-700">Persistent Mode</h4>
+              <p className="text-sm text-gray-500">Never leave without permission</p>
+            </div>
+            <Switch
+              checked={form.watch("persistentMode") ?? true}
+              onCheckedChange={(checked) => form.setValue("persistentMode", checked)}
+            />
           </div>
 
           <div className="flex items-center justify-between">

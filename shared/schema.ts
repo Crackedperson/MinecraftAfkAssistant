@@ -21,6 +21,8 @@ export const botConfigs = pgTable("bot_configs", {
   chatResponse: boolean("chat_response").notNull().default(false),
   autoStart: boolean("auto_start").notNull().default(false),
   isActive: boolean("is_active").notNull().default(false),
+  persistentMode: boolean("persistent_mode").notNull().default(true), // Never leave without permission
+  allowAutoDisconnect: boolean("allow_auto_disconnect").notNull().default(false), // Allow automatic disconnection
   createdAt: timestamp("created_at").defaultNow(),
 });
 

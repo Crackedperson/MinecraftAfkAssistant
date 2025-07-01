@@ -20,6 +20,7 @@ export function QuickConfig({ botConfig }: QuickConfigProps) {
   const [movementInterval, setMovementInterval] = useState([botConfig.movementInterval]);
   const [autoReconnect, setAutoReconnect] = useState(botConfig.autoReconnect);
   const [chatResponse, setChatResponse] = useState(botConfig.chatResponse);
+  const [persistentMode, setPersistentMode] = useState(botConfig.persistentMode ?? true);
 
   const updateConfigMutation = useMutation({
     mutationFn: (updates: Partial<InsertBotConfig>) => 
@@ -46,6 +47,7 @@ export function QuickConfig({ botConfig }: QuickConfigProps) {
       movementInterval: movementInterval[0],
       autoReconnect,
       chatResponse,
+      persistentMode,
     });
   };
 
@@ -110,6 +112,17 @@ export function QuickConfig({ botConfig }: QuickConfigProps) {
             <Switch
               checked={chatResponse}
               onCheckedChange={setChatResponse}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-medium text-gray-700">Persistent Mode</h4>
+              <p className="text-sm text-gray-500">Never leave without permission</p>
+            </div>
+            <Switch
+              checked={persistentMode}
+              onCheckedChange={setPersistentMode}
             />
           </div>
 

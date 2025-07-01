@@ -119,9 +119,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/bot-configs/:id/stop", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const success = await botService.stopBot(id);
+      const forced = req.body.forced === true;
+      const success = await botService.stopBot(id, forced);
       
       if (!success) {
+        const config = await storage.getBotConfig(id);
+        if (config?.persistentMode && !forced) {
+          return res.status(400).json({ 
+            error: "Bot is in persistent mode. Use force stop to override.",
+            persistentMode: true 
+          });
+        }
         return res.status(400).json({ error: "Failed to stop bot" });
       }
       
