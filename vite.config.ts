@@ -13,7 +13,7 @@ export default defineConfig(async () => {
       const { cartographer } = await import("@replit/vite-plugin-cartographer");
       plugins.push(runtimeErrorOverlay(), cartographer());
     } catch (err) {
-      console.warn("Skipping Replit-only plugins on Railway");
+      console.warn("⚠️ Replit plugins could not be loaded. Skipping.");
     }
   }
 
