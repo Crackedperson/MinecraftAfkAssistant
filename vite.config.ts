@@ -2,19 +2,20 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
-// Only import Replit plugins in dev/Replit
+// Determine if we're in Replit
 const isReplit = process.env.REPL_ID !== undefined && process.env.NODE_ENV !== "production";
 
 export default defineConfig(async () => {
   const plugins = [react()];
 
+  // Only import Replit plugins dynamically if in Replit
   if (isReplit) {
     try {
       const { default: runtimeErrorOverlay } = await import("@replit/vite-plugin-runtime-error-modal");
       const { cartographer } = await import("@replit/vite-plugin-cartographer");
       plugins.push(runtimeErrorOverlay(), cartographer());
     } catch (err) {
-      console.warn("Replit plugins failed to load, skipping:", err);
+      console.warn("⚠️ Replit plugins could not be loaded. Skipping them.");
     }
   }
 
@@ -40,4 +41,3 @@ export default defineConfig(async () => {
     },
   };
 });
-
