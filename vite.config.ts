@@ -7,13 +7,14 @@ const isReplit = process.env.REPL_ID !== undefined && process.env.NODE_ENV !== "
 export default defineConfig(async () => {
   const plugins = [react()];
 
+  // Only try to load Replit plugins if actually running on Replit
   if (isReplit) {
     try {
       const { default: runtimeErrorOverlay } = await import("@replit/vite-plugin-runtime-error-modal");
       const { cartographer } = await import("@replit/vite-plugin-cartographer");
       plugins.push(runtimeErrorOverlay(), cartographer());
     } catch (err) {
-      console.warn("Skipping Replit-only plugins on Railway");
+      console.warn("⚠️ Skipping Replit plugins, not available on Railway.");
     }
   }
 
