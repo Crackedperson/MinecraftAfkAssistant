@@ -4,6 +4,7 @@ import { BotControls } from "@/components/bot-controls";
 import { QuickConfig } from "@/components/quick-config";
 import { ActivityLogs } from "@/components/activity-logs";
 import { ServerConfigModal } from "@/components/server-config-modal";
+import { ChatMessage } from "@/components/chat-message";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BotConfig, BotStats } from "@shared/schema";
@@ -50,7 +51,7 @@ export default function Dashboard() {
   }, [botConfigs, selectedBotId]);
 
   const selectedConfig = botConfigs?.find(config => config.id === selectedBotId);
-  const selectedStatus = botStatuses?.find((status: any) => status.config.id === selectedBotId);
+  const selectedStatus = Array.isArray(botStatuses) ? botStatuses.find((status: any) => status.config.id === selectedBotId) : undefined;
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['/api/bot-configs'] });
@@ -121,6 +122,13 @@ export default function Dashboard() {
                 
                 <QuickConfig 
                   botConfig={selectedConfig}
+                />
+              </div>
+
+              <div className="mt-8">
+                <ChatMessage 
+                  botConfig={selectedConfig}
+                  isOnline={selectedStatus?.status?.stats?.status === 'online'}
                 />
               </div>
 

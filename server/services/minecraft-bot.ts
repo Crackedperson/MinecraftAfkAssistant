@@ -227,6 +227,29 @@ export class MinecraftBotService {
     }
   }
 
+  async sendChatMessage(configId: number, message: string): Promise<boolean> {
+    const bot = this.bots.get(configId);
+    if (!bot) {
+      await this.addLog(configId, 'ERROR', 'Cannot send message - Bot is not connected');
+      return false;
+    }
+
+    try {
+      bot.chat(message);
+      await this.addLog(configId, 'CHAT', `Sent message: ${message}`);
+      this.broadcast({
+        type: 'chatMessage',
+        configId,
+        message,
+        timestamp: new Date().toISOString()
+      });
+      return true;
+    } catch (error) {
+      await this.addLog(configId, 'ERROR', `Failed to send message: ${(error as Error).message}`);
+      return false;
+    }
+  }
+
   async stopBot(configId: number, forced: boolean = false): Promise<boolean> {
     const config = await storage.getBotConfig(configId);
     const bot = this.bots.get(configId);

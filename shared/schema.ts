@@ -105,6 +105,12 @@ export const wsMessageSchema = z.discriminatedUnion("type", [
       error: z.string(),
     }),
   }),
+  z.object({
+    type: z.literal("chatMessage"),
+    configId: z.number(),
+    message: z.string(),
+    timestamp: z.string(),
+  }),
 ]);
 
 export type WSMessage = z.infer<typeof wsMessageSchema>;

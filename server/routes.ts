@@ -155,6 +155,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/bot-configs/:id/chat", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { message } = req.body;
+      
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ error: "Message is required" });
+      }
+      
+      const success = await botService.sendChatMessage(id, message);
+      
+      if (!success) {
+        return res.status(400).json({ error: "Failed to send message" });
+      }
+      
+      res.json({ message: "Chat message sent successfully" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to send chat message" });
+    }
+  });
+
   // Bot status routes
   app.get("/api/bot-configs/:id/status", async (req, res) => {
     try {
